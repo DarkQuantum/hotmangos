@@ -151,6 +151,7 @@ Unit::Unit()
     m_removedAuras = 0;
     m_charmInfo = NULL;
     m_unit_movement_flags = 0;
+	is_vehicle = false;
 
     // remove aurastates allowing special moves
     for(int i=0; i < MAX_REACTIVE; ++i)
@@ -257,7 +258,9 @@ void Unit::SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTim
 
 void Unit::SendMonsterMove(float NewPosX, float NewPosY, float NewPosZ, uint8 type, uint32 MovementFlags, uint32 Time, Player* player)
 {
-    WorldPacket data( SMSG_MONSTER_MOVE, (41 + GetPackGUID().size()) );
+    if(this->is_vehicle)
+		return;
+	WorldPacket data( SMSG_MONSTER_MOVE, (41 + GetPackGUID().size()) );
     data.append(GetPackGUID());
 
     // Point A, starting location
@@ -306,7 +309,8 @@ void Unit::SendMonsterMoveByPath(Path const& path, uint32 start, uint32 end, uin
     uint32 traveltime = uint32(path.GetTotalLength(start, end) * 32);
 
     uint32 pathSize = end-start;
-
+	if(this->is_vehicle)
+		return;
     WorldPacket data( SMSG_MONSTER_MOVE, (GetPackGUID().size()+4+4+4+4+1+4+4+4+pathSize*4*3) );
     data.append(GetPackGUID());
     data << GetPositionX();
@@ -11167,7 +11171,146 @@ void Unit::RemovePetAura(PetAura const* petSpell)
     if(Pet* pet = GetPet())
         pet->RemoveAurasDueToSpell(petSpell->GetAura(pet->GetEntry()));
 }
+void Unit::EnterVehicle(Creature *cc)
+{
+	uint32 v_entry = cc->GetCreatureInfo()->Entry;
 
+    VehiclesInfo const *einfo = objmgr.GetVehiclesInfo(v_entry);
+    if (!einfo)
+        return;
+	((Player*)this)->RemovePet(NULL,PET_SAVE_NOT_IN_SLOT, true);
+
+    float px, py, pz, oo;
+    px = cc->GetPositionX();
+	py = cc->GetPositionY();
+	pz = cc->GetPositionZ() + 1.0f;
+	oo = cc->GetOrientation();
+
+	uint8 seat = cc->GenerateSeat();
+	if(seat == 0)
+	{
+		cc->SetUInt64Value(UNIT_FIELD_CREATEDBY, this->GetGUID());
+		cc->SetUInt64Value(UNIT_FIELD_CHARMEDBY, this->GetGUID());
+		cc->SetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE, this->getFaction());
+		cc->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNKNOWN5);
+		cc->SetUInt32Value(UNIT_NPC_FLAGS , 0);//not correct, but only one seat for now
+		//cc->SetUInt32Value(UNIT_FIELD_BYTES_0,0x20200);
+		cc->SetUInt32Value(UNIT_FIELD_BYTES_1,0x3000000);
+		cc->SetUInt32Value(UNIT_FIELD_PETEXPERIENCE,0);
+		cc->SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP,2147483647);//FF FF FF 7F
+		cc->CombatStop();
+        cc->DeleteThreatList();
+		cc->GetMotionMaster()->Clear();
+		cc->GetMotionMaster()->MoveIdle();
+		cc->StopMoving();
+		this->CombatStop();
+		this->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+		this->SetUInt64Value(UNIT_FIELD_CHARM, cc->GetGUID());
+		this->SetUInt64Value(UNIT_FIELD_TARGET, cc->GetGUID());
+		this->SetUInt64Value(PLAYER_FARSIGHT, cc->GetGUID());
+	}
+	else return;
+    sLog.outDebug("New Vehicle has guid %u", cc->GetGUIDLow());
+
+	WorldPacket data1(SMSG_CLIENT_CONTROL_UPDATE, 8+1);
+	data1 << cc->GetGUIDLow();
+	data1 << uint8(1);
+	((Player*)this)->GetSession()->SendPacket(&data1);
+
+	WorldPacket data2(SMSG_ENTER_VEHICLE);
+	((Player*)this)->GetSession()->SendPacket(&data2);
+
+	WorldPacket data4(MSG_MOVE_TELEPORT_ACK,8+4+4+2+4+16+8+16+4+1+4);
+	data4.append(this->GetPackGUID());
+	data4 << uint32(1);//count probably
+	data4 << uint32(0x200);//MOVEMENTFLAG_ONTRANSPORT
+	data4 << uint16(0);
+	data4 << getMSTime();
+	data4 << px;
+	data4 << py;
+	data4 << pz;
+	data4 << oo;
+	data4 << cc->GetGUID();
+	data4 << einfo->xoffset;//x offset
+	data4 << einfo->yoffset;//y offset
+	data4 << einfo->zoffset;//z offset
+	data4 << uint32(0);//o offset
+	data4<<uint8(0x48);data4<<uint8(0xab);data4<<uint8(0xf1);data4<<uint8(0x0a);//trans time
+	data4 << uint8(seat);//not sure
+	data4 << uint32(0);
+	((Player*)this)->GetSession()->SendPacket(&data4);
+
+	WorldPacket data(SMSG_PET_SPELLS, 8+4+4+4+40+4+4+4+2);
+
+	data << (uint64)cc->GetGUID();
+	data << uint32(0);
+	data << uint32(0);
+	data << uint8(1) << uint8(1) << uint16(0);
+
+	for(uint32 i = 0; i < 10; i++)
+	{
+		data << uint16(einfo->vehiclespells[i]) << uint16(einfo->vehiclespells[i] ? 0xC100 : 0);
+	}
+	data << uint8(0);
+	data << uint8(0);
+	((Player*)this)->GetSession()->SendPacket(&data);
+
+	data.Initialize(SMSG_FORCE_RUN_SPEED_CHANGE, 20);//SMSG_FORCE_RUN_SPEED_CHANGE
+	data << cc->GetGUIDLow();
+	data<<uint8(0x00);data<<uint8(0x00);data<<uint8(0x00);data<<uint8(0x00);
+	data<<uint8(0x01);data<<uint8(0x00);data<<uint8(0x00);data<<uint8(0x80);
+	((Player*)this)->GetSession()->SendPacket(&data);
+
+	data.Initialize(SMSG_FORCE_FLIGHT_SPEED_CHANGE, 20);
+	data << cc->GetGUIDLow();
+	data<<uint8(0x01);data<<uint8(0x00);data<<uint8(0x00);data<<uint8(0x00);
+	data<<uint8(0x66);data<<uint8(0x66);data<<uint8(0xbe);data<<uint8(0x41);
+	((Player*)this)->GetSession()->SendPacket(&data);
+
+	data.Initialize(SMSG_MOVE_SET_CAN_FLY, 20);
+	data << cc->GetGUIDLow();
+	data<<uint8(0x02);data<<uint8(0x00);data<<uint8(0x00);data<<uint8(0x00);
+	((Player*)this)->GetSession()->SendPacket(&data);
+
+}
+void Unit::ExitVehicle()
+{
+	Creature* cc = ObjectAccessor::GetCreatureOrPet(*((Player*)this), this->GetUInt64Value(UNIT_FIELD_CHARM));
+	if(!cc)
+		return;
+
+	cc->SetUInt64Value(UNIT_FIELD_CREATEDBY, 0);
+	cc->SetUInt64Value(UNIT_FIELD_CHARMEDBY, 0);
+	CreatureInfo const *cinfo = cc->GetCreatureInfo();
+	cc->SetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE,cinfo->faction_A);
+	cc->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNKNOWN5);
+	cc->SetUInt32Value(UNIT_NPC_FLAGS , UNIT_NPC_FLAG_SPELLCLICK);//not correct
+	cc->RemoveFlag(UNIT_FIELD_BYTES_1,0x3000000);
+	cc->SetUInt32Value(UNIT_FIELD_PETEXPERIENCE,0);
+	cc->SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP,0);
+	cc->CombatStop();
+    cc->DeleteThreatList();
+	cc->AIM_Initialize();
+	this->CombatStop();
+	this->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+	this->SetUInt64Value(UNIT_FIELD_CHARM, 0);
+	this->SetUInt64Value(UNIT_FIELD_TARGET, 0);
+	this->SetUInt64Value(PLAYER_FARSIGHT, 0);
+
+	WorldPacket data1(SMSG_CLIENT_CONTROL_UPDATE, 8+1);
+	data1.append(this->GetPackGUID());
+	data1 << uint8(1);
+	((Player*)this)->GetSession()->SendPacket(&data1);
+
+	WorldPacket data4(MSG_MOVE_TELEPORT_ACK);
+	this->BuildTeleportAckMsg(&data4,this->GetPositionX(), this->GetPositionY(), this->GetPositionZ(), this->GetOrientation());
+	((Player*)this)->GetSession()->SendPacket(&data4);
+
+	WorldPacket data(SMSG_PET_SPELLS, 8);
+	data << uint64(0);
+	data << uint32(0);
+	((Player*)this)->GetSession()->SendPacket(&data);
+}
 Pet* Unit::CreateTamedPetFrom(Creature* creatureTarget,uint32 spell_id)
 {
     Pet* pet = new Pet(HUNTER_PET);

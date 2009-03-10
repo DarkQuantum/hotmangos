@@ -786,6 +786,19 @@ void ObjectMgr::LoadEquipmentTemplates()
     // This DBC is currently only used for item templates and creature equipments checks.
     sItemStore.Clear();
 }
+VehiclesInfo const* ObjectMgr::GetVehiclesInfo(uint32 entry)
+{
+    return sVehiclesStorage.LookupEntry<VehiclesInfo>(entry);
+}
+ 
+void ObjectMgr::LoadVehicles()
+{
+    sVehiclesStorage.Load();
+
+    sLog.outString( ">> Loaded %u vehicles", sVehiclesStorage.RecordCount );
+    sLog.outString();
+}
+
 
 CreatureModelInfo const* ObjectMgr::GetCreatureModelInfo(uint32 modelid)
 {

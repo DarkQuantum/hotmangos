@@ -1257,7 +1257,11 @@ bool Creature::CreateFromProto(uint32 guidlow, uint32 Entry, uint32 team, const 
     }
     m_originalEntry = Entry;
 
-    Object::_Create(guidlow, Entry, HIGHGUID_UNIT);
+    VehiclesInfo const *einfo = objmgr.GetVehiclesInfo(Entry);
+    if (!einfo)
+		Object::_Create(guidlow, Entry, HIGHGUID_UNIT);
+	else
+		Object::_Create(guidlow, Entry, HIGHGUID_VEHICLE);
 
     if(!UpdateEntry(Entry, team, data))
         return false;
@@ -1362,6 +1366,16 @@ void Creature::LoadEquipment(uint32 equip_entry, bool force)
     m_equipmentId = equip_entry;
     for (uint8 i = 0; i < 3; i++)
         SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + i, einfo->equipentry[i]);
+}
+void Creature::LoadVehicleData()
+{
+	uint32 v_entry = GetCreatureInfo()->Entry;
+ 
+    VehiclesInfo const *einfo = objmgr.GetVehiclesInfo(v_entry);
+    if (!einfo)
+        return;
+
+	this->is_vehicle = true;
 }
 
 bool Creature::hasQuest(uint32 quest_id) const

@@ -827,7 +827,26 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         bool haveOffhandWeapon() const;
         bool canReachWithAttack(Unit *pVictim) const;
         uint32 m_extraAttacks;
-
+		bool is_vehicle;
+		void EnterVehicle(Creature *cc);
+		void ExitVehicle();
+		uint64 veh_seats[8];
+		uint8 GenerateSeat() const//not implemented yet
+		{
+			/*VehiclesInfo const *einfo = objmgr.GetVehiclesInfo(this->GetCreatureInfo()->Entry);
+			if (!einfo)
+				return 0;
+			VehiclesEntry const* g = sVehiclesStore.LookupEntry(einfo->vehicleID);
+			if (!g)
+				return 0;
+			for(uint8 l = 0; l < 8;l++)
+			{
+				if(g->seatID[l] > 1)
+					if(veh_seats[l] == 0)
+						return l;
+			}*/
+			return 0;
+		}
         void _addAttacker(Unit *pAttacker)                  // must be called only from Unit::Attack(Unit*)
         {
             AttackerSet::iterator itr = m_attackers.find(pAttacker);
@@ -1265,6 +1284,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void addHatedBy(HostilReference* pHostilReference) { m_HostilRefManager.insertFirst(pHostilReference); };
         void removeHatedBy(HostilReference* /*pHostilReference*/ ) { /* nothing to do yet */ }
         HostilRefManager& getHostilRefManager() { return m_HostilRefManager; }
+        uint32 GetVisibleAura(uint32 slot) { return m_visibleAuras[slot]; }
+        void SetVisibleAura(uint32 slot, uint32 spellid) { m_visibleAuras[slot] = spellid; }
 
         uint32 GetVisibleAura(uint8 slot)
         {

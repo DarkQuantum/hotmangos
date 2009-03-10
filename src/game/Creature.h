@@ -245,6 +245,15 @@ struct EquipmentInfo
     uint32  entry;
     uint32  equipentry[3];
 };
+struct VehiclesInfo
+{
+    uint32  entry;
+    uint32  vehicleID;
+	uint16  vehiclespells[10];
+	float	xoffset;
+	float	yoffset;
+	float	zoffset;
+};
 
 // from `creature` table
 struct CreatureData
@@ -420,6 +429,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         bool LoadCreaturesAddon(bool reload = false);
         void SelectLevel(const CreatureInfo *cinfo);
         void LoadEquipment(uint32 equip_entry, bool force=false);
+		void LoadVehicleData();
 
         uint32 GetDBTableGUIDLow() const { return m_DBTableGuid; }
         char const* GetSubName() const { return GetCreatureInfo()->SubName; }

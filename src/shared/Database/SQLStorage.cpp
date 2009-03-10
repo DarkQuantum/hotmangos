@@ -31,6 +31,7 @@ const char CreatureDataAddonInfofmt[]="iiiiiiis";
 const char CreatureModelfmt[]="iffbi";
 const char CreatureInfoAddonInfofmt[]="iiiiiiis";
 const char EquipmentInfofmt[]="iiii";
+const char VehiclesInfofmt[]="iiiiiiiiiiiifff";
 const char GameObjectInfosrcfmt[]="iiissiifiiiiiiiiiiiiiiiiiiiiiiiis";
 const char GameObjectInfodstfmt[]="iiissiifiiiiiiiiiiiiiiiiiiiiiiiii";
 const char ItemPrototypesrcfmt[]="iiiisiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiffiffiffiffiffiiiiiiiiiifiiifiiiiiifiiiiiifiiiiiifiiiiiifiiiisiiiiiiiiiiiiiiiiiiiiiiiiifiisiiii";
@@ -44,6 +45,7 @@ SQLStorage sCreatureStorage(CreatureInfosrcfmt, CreatureInfodstfmt, "entry","cre
 SQLStorage sCreatureDataAddonStorage(CreatureDataAddonInfofmt,"guid","creature_addon");
 SQLStorage sCreatureModelStorage(CreatureModelfmt,"modelid","creature_model_info");
 SQLStorage sCreatureInfoAddonStorage(CreatureInfoAddonInfofmt,"entry","creature_template_addon");
+SQLStorage sVehiclesStorage(VehiclesInfofmt,"entry","creature_Vehicles");
 SQLStorage sEquipmentStorage(EquipmentInfofmt,"entry","creature_equip_template");
 SQLStorage sGOStorage(GameObjectInfosrcfmt, GameObjectInfodstfmt, "entry","gameobject_template");
 SQLStorage sItemStorage(ItemPrototypesrcfmt, ItemPrototypedstfmt, "entry","item_template");

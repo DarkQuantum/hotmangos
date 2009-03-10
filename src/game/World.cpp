@@ -1104,7 +1104,8 @@ void World::SetInitialWorldSettings()
     objmgr.SetDBCLocaleIndex(GetDefaultDbcLocale());        // Get once for all the locale index of DBC language (console/broadcasts)
     sLog.outString( ">>> Localization strings loaded" );
     sLog.outString();
-
+	sLog.outString( "Loading Vehicles...");
+    objmgr.LoadVehicles();
     sLog.outString( "Loading Page Texts..." );
     objmgr.LoadPageTexts();
 
