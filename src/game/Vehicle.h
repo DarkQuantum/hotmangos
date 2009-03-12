@@ -23,6 +23,16 @@
 #include "Creature.h"
 #include "Unit.h"
 
+struct VehiclesInfo
+{
+    uint32  entry;
+    uint32  vehicleID;
+	uint16  vehiclespells[10];
+	float	xoffset;
+	float	yoffset;
+	float	zoffset;
+};
+
 class Vehicle : public Creature
 {
     public:
@@ -41,7 +51,7 @@ class Vehicle : public Creature
         void SetVehicleId(uint32 vehicleid) { m_vehicleId = vehicleid; }
 
         void Dismiss();
-
+		void LoadVehicleData();
     protected:
         uint32 m_vehicleId;
 

@@ -1367,16 +1367,6 @@ void Creature::LoadEquipment(uint32 equip_entry, bool force)
     for (uint8 i = 0; i < 3; i++)
         SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + i, einfo->equipentry[i]);
 }
-void Creature::LoadVehicleData()
-{
-	uint32 v_entry = GetCreatureInfo()->Entry;
- 
-    VehiclesInfo const *einfo = objmgr.GetVehiclesInfo(v_entry);
-    if (!einfo)
-        return;
-
-	this->is_vehicle = true;
-}
 
 bool Creature::hasQuest(uint32 quest_id) const
 {

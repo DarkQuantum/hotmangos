@@ -19555,7 +19555,12 @@ void Player::EnterVehicle(Vehicle *vehicle)
     VehicleSeatEntry const *veSeat = sVehicleSeatStore.LookupEntry(ve->m_seatID[0]);
     if(!veSeat)
         return;
+	//Need fix this
+	/*uint32 v_entry = cc->GetCreatureInfo()->Entry;
 
+    VehiclesInfo const *einfo = objmgr.GetVehiclesInfo(v_entry);
+    if (!einfo)
+        return;*/
     vehicle->SetCharmerGUID(GetGUID());
     vehicle->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
     vehicle->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNK_24);
@@ -19599,7 +19604,8 @@ void Player::EnterVehicle(Vehicle *vehicle)
 
 	for(uint32 i = 0; i < 10; ++i)
 	{
-		data << uint16(vehicle->vehiclespells[i]) << uint16(vehicle->vehiclespells[i] ? 0xC100 : 0);
+		//and this 
+		//data << uint16(vehicle->vehiclespells[i]) << uint16(vehicle->vehiclespells[i] ? 0xC100 : 0);
 	}
 	data << uint8(0);
 	data << uint8(0);

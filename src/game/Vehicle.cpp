@@ -95,3 +95,13 @@ void Vehicle::Dismiss()
     CleanupsBeforeDelete();
     AddObjectToRemoveList();
 }
+void Vehicle::LoadVehicleData()
+{
+	uint32 v_entry = GetCreatureInfo()->Entry;
+ 
+    VehiclesInfo const *einfo = objmgr.GetVehiclesInfo(v_entry);
+    if (!einfo)
+        return;
+
+	this->is_vehicle = true;
+}
