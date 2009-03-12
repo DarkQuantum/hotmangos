@@ -19591,17 +19591,18 @@ void Player::EnterVehicle(Vehicle *vehicle)
     data << uint32(0);                                      // fall time
     GetSession()->SendPacket(&data);
 
-    data.Initialize(SMSG_PET_SPELLS, 8+4+4+4+4*10+1+1);
+    data.Initialize(SMSG_PET_SPELLS, 8+4+4+4+4*10+4+4+4+2);
     data << uint64(vehicle->GetGUID());
-    data << uint32(0x00000000);
-    data << uint32(0x00000000);
-    data << uint32(0x00000101);
+	data << uint32(0);
+	data << uint32(0);
+	data << uint8(1) << uint8(1) << uint16(0);
 
-    for(uint32 i = 0; i < 10; ++i)
-        data << uint16(0) << uint8(0) << uint8(i+8);
-
-    data << uint8(0);
-    data << uint8(0);
+	for(uint32 i = 0; i < 10; ++i)
+	{
+		data << uint16(vehicle->vehiclespells[i]) << uint16(vehicle->vehiclespells[i] ? 0xC100 : 0);
+	}
+	data << uint8(0);
+	data << uint8(0);
     GetSession()->SendPacket(&data);
 }
 
